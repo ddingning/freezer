@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">冻结助手</string>
+    <string name="app_title">冻结助手</string>
+    <string name="app_subtitle">多权限 · 冻结 / 解冻 / 卸载</string>
+    <string name="refresh">刷新</string>
+    <string name="logo">应用图标</string>
+
+    <string name="search_hint">搜索名称 / 包名 / UID</string>
+
+    <string name="filter_all">全部</string>
+    <string name="filter_user">用户应用</string>
+    <string name="filter_system">系统应用</string>
+    <string name="filter_frozen">已冻结</string>
+
+    <string name="status_frozen">已冻结</string>
+    <string name="status_system">系统</string>
+    <string name="status_running">运行中</string>
+
+    <string name="summary">共 %1$d 个应用 · %2$d 个已冻结</string>
+    <string name="version_format">版本 %1$s</string>
+    <string name="loading">正在加载应用…</string>
+    <string name="empty_title">没有找到应用</string>
+    <string name="empty_subtitle">试试更换关键词或分类</string>
+
+    <string name="provider_checking">检测权限中…</string>
+    <string name="no_privilege">无可用权限</string>
+    <string name="device_admin_only">设备管理员（只读）</string>
+    <string name="permissions_title">权限与工作模式</string>
+    <string name="permissions_subtitle">按实际执行结果选择可用后端</string>
+    <string name="permissions_note">不同权限模式的能力不同：ADB Shell 是 UID 2000，不是 Root；设备管理员不能静默管理应用；设备所有者仅支持隐藏/取消隐藏。</string>
+    <string name="action_recheck">重新检测</string>
+    <string name="action_pair">配对</string>
+    <string name="action_connect">连接</string>
+    <string name="action_disconnect">断开</string>
+    <string name="action_authorize">授权</string>
+    <string name="action_open_shizuku">打开 Shizuku</string>
+    <string name="action_setup_owner">设置说明</string>
+    <string name="action_activate_admin">激活管理员</string>
+    <string name="action_deactivate_admin">停用管理员</string>
+    <string name="action_copy_command">复制命令</string>
+    <string name="action_start_pairing">开始配对</string>
+    <string name="action_stop_pairing">停止配对</string>
+    <string name="action_open_wireless">打开无线调试设置</string>
+    <string name="action_close">关闭</string>
+    <string name="adb_pairing_title">无线调试配对</string>
+    <string name="adb_pairing_instructions">在系统设置中打开“无线调试”，进入“使用配对码配对设备”，记下六位配对码；保持该配对窗口打开，然后回到这里输入配对码。</string>
+    <string name="adb_pairing_waiting">等待配对服务…</string>
+    <string name="adb_pairing_found">已发现配对服务：%1$s:%2$d</string>
+    <string name="adb_pairing_lost">配对服务已消失，请重新打开系统的配对对话框</string>
+    <string name="adb_pairing_code_hint">六位配对码</string>
+    <string name="adb_pairing_success">配对成功</string>
+    <string name="adb_pairing_failed">配对失败</string>
+    <string name="adb_pairing_invalid_code">请输入六位数字配对码</string>
+    <string name="adb_pairing_no_service">尚未发现配对服务，请先打开系统无线调试配对窗口</string>
+    <string name="detail_title">应用详情</string>
+    <string name="detail_loading">检测状态中…</string>
+    <string name="detail_unavailable">不可用</string>
+    <string name="detail_unknown">未知</string>
+    <string name="detail_copy_done">已复制</string>
+    <string name="detail_label_package">包名</string>
+    <string name="detail_label_source">程序路径</string>
+    <string name="detail_label_data">数据路径</string>
+    <string name="detail_label_uid">UID</string>
+    <string name="detail_label_first_install">安装日期</string>
+    <string name="detail_label_last_update">更新时间</string>
+    <string name="detail_label_running">运行状态</string>
+    <string name="detail_label_frozen">冻结状态</string>
+    <string name="detail_label_system">系统应用</string>
+    <string name="detail_label_apk_size">APK 大小</string>
+    <string name="detail_label_version">版本</string>
+    <string name="detail_label_target_sdk">目标 SDK</string>
+    <string name="detail_label_version_code">版本号</string>
+    <string name="detail_yes">是</string>
+    <string name="detail_no">否</string>
+    <string name="status_not_running">未运行</string>
+    <string name="status_not_frozen">未冻结</string>
+    <string name="status_unknown">未知</string>
+    <string name="open_project_home">打开项目主页</string>
+    <string name="permissions">权限</string>
+    <string name="root_granted">Root 已授权</string>
+    <string name="root_denied">未获取 Root</string>
+    <string name="root_rechecking">正在重新检测 Root…</string>
+    <string name="root_still_checking">正在检测 Root 权限，请稍候…</string>
+    <string name="root_required_title">需要 Root 权限</string>
+    <string name="root_required_message">冻结、解冻和卸载应用需要 Root 权限。\n\n请确认设备已 Root，并在 Root 管理器中授予本应用权限，然后点击下方按钮重试。</string>
+    <string name="root_retry">重新检测</string>
+
+    <string name="action_freeze">冻结应用</string>
+    <string name="action_unfreeze">解冻应用</string>
+    <string name="action_uninstall">卸载应用</string>
+    <string name="action_open">打开应用</string>
+    <string name="action_info">应用信息</string>
+    <string name="cancel">取消</string>
+    <string name="close">关闭</string>
+
+    <string name="progress_freeze">正在冻结 %1$s…</string>
+    <string name="progress_unfreeze">正在解冻 %1$s…</string>
+    <string name="progress_uninstall">正在卸载 %1$s…</string>
+
+    <string name="toast_frozen">已冻结 %1$s</string>
+    <string name="toast_unfrozen">已解冻 %1$s</string>
+    <string name="toast_uninstalled">已卸载 %1$s</string>
+
+    <string name="fail_freeze">冻结失败</string>
+    <string name="fail_unfreeze">解冻失败</string>
+    <string name="fail_uninstall">卸载失败</string>
+    <string name="failure_no_output">命令执行失败，退出码 %1$d。</string>
+
+    <string name="uninstall_title">卸载应用</string>
+    <string name="uninstall_message">确定要卸载「%1$s」吗？\n\n包名：%2$s</string>
+    <string name="uninstall_system_warning">警告：这是系统应用，卸载可能导致系统功能异常，请谨慎操作。</string>
+
+    <string name="applist_help_title">无法读取应用列表</string>
+    <string name="applist_help_root_message">系统限制了读取应用列表的权限。已通过 Root 自动授权，请重新打开应用以生效。</string>
+    <string name="applist_help_no_root_message">系统限制了读取应用列表的权限。请在系统设置中允许本应用读取应用列表，或授予 Root 权限后重试。</string>
+    <string name="restart_now">立即重启</string>
+    <string name="restarting">正在重启应用…</string>
+    <string name="quit">退出</string>
+    <string name="retry">重试</string>
+    <string name="open_app_settings">应用设置</string>
+
+    <string name="no_launch_intent">该应用没有可启动的界面</string>
+    <string name="launch_failed">无法启动该应用</string>
+    <string name="open_settings_failed">无法打开应用信息页面</string>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0B1220</color>
+    <color name="surface">#111A2C</color>
+    <color name="surface_2">#16223A</color>
+    <color name="card_bg">#142033</color>
+    <color name="card_stroke">#1E2C45</color>
+
+    <color name="primary">#7DD3FC</color>
+    <color name="on_primary">#06283D</color>
+    <color name="primary_container">#12314C</color>
+
+    <color name="text_primary">#E8F1FF</color>
+    <color name="text_secondary">#93A7C4</color>
+    <color name="outline">#2A3B57</color>
+    <color name="ripple">#33FFFFFF</color>
+
+    <color name="ok">#34D399</color>
+    <color name="error">#F87171</color>
+
+    <color name="frozen_bg">#3B1E2E</color>
+    <color name="frozen_stroke">#6B2E44</color>
+    <color name="frozen_text">#FDA4AF</color>
+
+    <color name="system_bg">#1E2A44</color>
+    <color name="system_stroke">#2F4A75</color>
+    <color name="system_text">#93C5FD</color>
+
+    <color name="pill_idle_bg">#1B2740</color>
+    <color name="pill_idle_stroke">#2A3B57</color>
+    <color name="pill_ok_bg">#0F2E24</color>
+    <color name="pill_ok_stroke">#1F6F52</color>
+    <color name="pill_err_bg">#3A1D24</color>
+    <color name="pill_err_stroke">#7F2D3A</color>
+
+    <color name="ic_launcher_background">#0B1220</color>
+</resources>
