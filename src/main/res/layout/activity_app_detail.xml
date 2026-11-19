@@ -195,7 +195,8 @@
                     android:text="@string/action_uninstall"
                     android:textColor="@color/error"
                     app:icon="@drawable/ic_delete"
-                    app:iconPadding="6dp"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
                     app:iconTint="@color/error" />
 
                 <com.google.android.material.button.MaterialButton

@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
@@ -33,9 +34,12 @@ import com.frostbyte.freezer.provider.PrivilegeProvider;
 import com.frostbyte.freezer.provider.ProviderManager;
 import com.frostbyte.freezer.provider.ProviderStatus;
 import com.frostbyte.freezer.provider.ProviderType;
+import com.frostbyte.freezer.provider.ShellProvider;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,6 +62,9 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
     private TextView providerStatusView;
     private TextView summaryView;
     private TextInputEditText searchInput;
+    private ChipGroup chipGroup;
+    private Chip chipRunning;
+    private Runnable pendingRunningClick;
 
     private AlertDialog progressDialog;
     private ActivityResultLauncher<Intent> detailLauncher;
@@ -111,25 +118,38 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
 
             @Override
             public void afterTextChanged(Editable s) {
-                adapter.setQuery(s == null ? "" : s.toString());
+                String text = s == null ? "" : s.toString();
+                if (!text.trim().isEmpty()
+                        && (adapter.getFilter() == AppListAdapter.Filter.RUNNING_USER
+                        || adapter.getFilter() == AppListAdapter.Filter.RUNNING_ALL)) {
+                    selectAllChip();
+                }
+                adapter.setQuery(text);
             }
         });
 
-        ChipGroup chipGroup = findViewById(R.id.chip_group);
-        chipGroup.setOnCheckedStateChangeListener((group, checkedIds) -> {
-            if (checkedIds == null || checkedIds.isEmpty()) {
-                return;
-            }
-            int id = checkedIds.get(0);
-            if (id == R.id.chip_user) {
-                adapter.setFilter(AppListAdapter.Filter.USER);
-            } else if (id == R.id.chip_system) {
-                adapter.setFilter(AppListAdapter.Filter.SYSTEM);
-            } else if (id == R.id.chip_frozen) {
-                adapter.setFilter(AppListAdapter.Filter.FROZEN);
-            } else {
-                adapter.setFilter(AppListAdapter.Filter.ALL);
-            }
+        chipGroup = findViewById(R.id.chip_group);
+        chipRunning = findViewById(R.id.chip_running);
+        chipRunning.setOnClickListener(v -> onRunningChipClick());
+        findViewById(R.id.chip_user).setOnClickListener(v -> {
+            cancelPendingRunningClick();
+            resetRunningChipStroke();
+            adapter.setFilter(AppListAdapter.Filter.USER);
+        });
+        findViewById(R.id.chip_system).setOnClickListener(v -> {
+            cancelPendingRunningClick();
+            resetRunningChipStroke();
+            adapter.setFilter(AppListAdapter.Filter.SYSTEM);
+        });
+        findViewById(R.id.chip_all).setOnClickListener(v -> {
+            cancelPendingRunningClick();
+            resetRunningChipStroke();
+            adapter.setFilter(AppListAdapter.Filter.ALL);
+        });
+        findViewById(R.id.chip_frozen).setOnClickListener(v -> {
+            cancelPendingRunningClick();
+            resetRunningChipStroke();
+            adapter.setFilter(AppListAdapter.Filter.FROZEN);
         });
 
         refresh();
@@ -147,6 +167,60 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
 
     private void openPermissions() {
         startActivity(new Intent(this, PermissionsActivity.class));
+    }
+
+    private void onRunningChipClick() {
+        if (pendingRunningClick != null) {
+            mainHandler.removeCallbacks(pendingRunningClick);
+            pendingRunningClick = null;
+            setRunningChipSpecial(true);
+            adapter.setFilter(AppListAdapter.Filter.RUNNING_ALL);
+        } else {
+            pendingRunningClick = () -> {
+                pendingRunningClick = null;
+                setRunningChipSpecial(false);
+                adapter.setFilter(AppListAdapter.Filter.RUNNING_USER);
+            };
+            mainHandler.postDelayed(pendingRunningClick, 300);
+        }
+    }
+
+    private void cancelPendingRunningClick() {
+        if (pendingRunningClick != null) {
+            mainHandler.removeCallbacks(pendingRunningClick);
+            pendingRunningClick = null;
+        }
+    }
+
+    private void resetRunningChipStroke() {
+        if (chipRunning != null) {
+            chipRunning.setChipStrokeWidth(0f);
+        }
+    }
+
+    private void setRunningChipSpecial(boolean special) {
+        if (chipRunning == null) {
+            return;
+        }
+        if (special) {
+            chipRunning.setChipStrokeColorResource(R.color.primary);
+            chipRunning.setChipStrokeWidth(dp(2));
+        } else {
+            chipRunning.setChipStrokeWidth(0f);
+        }
+    }
+
+    private void selectAllChip() {
+        cancelPendingRunningClick();
+        resetRunningChipStroke();
+        if (chipGroup != null) {
+            chipGroup.check(R.id.chip_all);
+        }
+        adapter.setFilter(AppListAdapter.Filter.ALL);
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void showProjectCard() {
@@ -180,13 +254,17 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
             if (startup != null) {
                 providerManager.fixPackageVisibility(startup);
             }
-            final List<AppInfo> apps = repository.loadInstalledApps();
+            List<AppInfo> apps = repository.loadInstalledApps();
+            final List<AppInfo> finalApps = appendCloneApps(apps, startup);
+            final Set<String> running = startup != null
+                    ? startup.queryRunningPackages(finalApps) : null;
 
             mainHandler.post(() -> {
                 if (destroyed || currentGeneration != generation.get()) {
                     return;
                 }
-                adapter.setAll(apps);
+                adapter.setAll(finalApps);
+                adapter.setRunningPackages(running);
                 loadingView.setVisibility(View.GONE);
                 updateSummary();
                 updateEmptyState();
@@ -194,6 +272,50 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
                 refreshProviderStatusesInternal(currentGeneration);
             });
         });
+    }
+
+    private List<AppInfo> appendCloneApps(List<AppInfo> baseApps, PrivilegeProvider provider) {
+        if (!(provider instanceof ShellProvider)) {
+            return baseApps;
+        }
+        ShellProvider shell = (ShellProvider) provider;
+        List<Integer> users = shell.listUserIds();
+        if (users.size() <= 1) {
+            return baseApps;
+        }
+
+        Map<String, AppInfo> baseByPackage = new HashMap<>();
+        for (AppInfo app : baseApps) {
+            if (app.userId == 0) {
+                baseByPackage.put(app.packageName, app);
+            }
+        }
+
+        List<AppInfo> result = new ArrayList<>(baseApps);
+        for (int userId : users) {
+            if (userId == 0) {
+                continue;
+            }
+            Set<String> packages = shell.listPackagesForUser(userId);
+            if (packages.isEmpty()) {
+                continue;
+            }
+            Map<String, Integer> uids = shell.listPackageUidsForUser(userId);
+            Set<String> disabled = shell.listDisabledPackagesForUser(userId);
+            for (String packageName : packages) {
+                AppInfo base = baseByPackage.get(packageName);
+                String label = base != null ? base.label : packageName;
+                String version = base != null ? base.versionName : "";
+                boolean system = base != null && base.system;
+                int uid = uids.containsKey(packageName)
+                        ? uids.get(packageName)
+                        : (base != null ? base.uid + userId * 100000 : -1);
+                boolean enabled = !disabled.contains(packageName);
+                result.add(new AppInfo(packageName, label, version, system, enabled, uid, userId));
+            }
+        }
+        AppRepository.sortApps(result);
+        return result;
     }
 
     private void refreshProviderStatuses() {
@@ -217,8 +339,26 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
                 }
                 updateProviderBadge();
                 applyFrozenState(currentGeneration);
+                refreshRunningPackages(currentGeneration);
                 maybeFixVisibilityAndReload(currentGeneration);
             }
+        });
+    }
+
+    private void refreshRunningPackages(final int currentGeneration) {
+        final List<AppInfo> snapshot = new ArrayList<>(adapter.getAllApps());
+        if (snapshot.isEmpty()) {
+            return;
+        }
+        ioExecutor.execute(() -> {
+            final Set<String> running = providerManager.getRunningPackages(snapshot);
+            mainHandler.post(() -> {
+                if (destroyed || currentGeneration != generation.get()) {
+                    return;
+                }
+                adapter.setRunningPackages(running);
+                updateEmptyState();
+            });
         });
     }
 
@@ -429,6 +569,8 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
     public void onAppClick(AppInfo app) {
         Intent intent = new Intent(this, AppDetailActivity.class);
         intent.putExtra(AppDetailActivity.EXTRA_PACKAGE_NAME, app.packageName);
+        intent.putExtra(AppDetailActivity.EXTRA_USER_ID, app.userId);
+        intent.putExtra(AppDetailActivity.EXTRA_UID, app.uid);
         detailLauncher.launch(intent);
     }
 
@@ -441,6 +583,7 @@ public class MainActivity extends AppCompatActivity implements AppListAdapter.Li
     protected void onDestroy() {
         destroyed = true;
         generation.incrementAndGet();
+        cancelPendingRunningClick();
         dismissProgress();
         ioExecutor.shutdownNow();
         mainHandler.removeCallbacksAndMessages(null);

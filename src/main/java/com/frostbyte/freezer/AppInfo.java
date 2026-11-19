@@ -1,7 +1,5 @@
 package com.frostbyte.freezer;
 
-import android.graphics.drawable.Drawable;
-
 public final class AppInfo {
     public final String packageName;
     public final String label;
@@ -9,7 +7,7 @@ public final class AppInfo {
     public final boolean system;
     public final boolean pmEnabled;
     public final int uid;
-    public final Drawable icon;
+    public final int userId;
     public boolean frozen;
 
     AppInfo(String packageName,
@@ -18,14 +16,22 @@ public final class AppInfo {
             boolean system,
             boolean pmEnabled,
             int uid,
-            Drawable icon) {
+            int userId) {
         this.packageName = packageName;
         this.label = label;
         this.versionName = versionName;
         this.system = system;
         this.pmEnabled = pmEnabled;
         this.uid = uid;
-        this.icon = icon;
+        this.userId = userId;
         this.frozen = !pmEnabled;
+    }
+
+    public String key() {
+        return userId + ":" + packageName;
+    }
+
+    public boolean isClone() {
+        return userId != 0;
     }
 }

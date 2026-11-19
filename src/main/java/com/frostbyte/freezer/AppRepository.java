@@ -61,13 +61,6 @@ final class AppRepository {
             } catch (Exception ignored) {
             }
 
-            Drawable icon;
-            try {
-                icon = packageManager.getApplicationIcon(info);
-            } catch (Exception e) {
-                icon = packageManager.getDefaultActivityIcon();
-            }
-
             boolean system = (info.flags & ApplicationInfo.FLAG_SYSTEM) != 0
                     || (info.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
 
@@ -78,22 +71,30 @@ final class AppRepository {
                     system,
                     info.enabled,
                     info.uid,
-                    icon));
+                    0));
         }
 
+        sortApps(result);
+        return result;
+    }
+
+    static void sortApps(List<AppInfo> apps) {
         final Collator collator = Collator.getInstance(Locale.getDefault());
         collator.setStrength(Collator.PRIMARY);
-        Collections.sort(result, new Comparator<AppInfo>() {
+        Collections.sort(apps, new Comparator<AppInfo>() {
             @Override
             public int compare(AppInfo left, AppInfo right) {
                 int byLabel = collator.compare(left.label, right.label);
                 if (byLabel != 0) {
                     return byLabel;
                 }
+                int byUser = Integer.compare(left.userId, right.userId);
+                if (byUser != 0) {
+                    return byUser;
+                }
                 return left.packageName.compareToIgnoreCase(right.packageName);
             }
         });
-        return result;
     }
 
     AppDetail loadAppDetail(String packageName) {

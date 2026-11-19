@@ -174,44 +174,52 @@ public final class ProviderManager {
         return null;
     }
 
-    public OperationResult freeze(String packageName, boolean systemApp) {
+    public OperationResult freeze(String packageName, boolean systemApp, int userId) {
         PrivilegeProvider provider = resolve(Capability.FREEZE);
         if (provider == null) {
             return OperationResult.unsupported(noProviderMessage("冻结"));
         }
-        return provider.freeze(packageName, systemApp);
+        return provider.freeze(packageName, systemApp, userId);
     }
 
-    public OperationResult unfreeze(String packageName) {
+    public OperationResult unfreeze(String packageName, int userId) {
         PrivilegeProvider provider = resolve(Capability.UNFREEZE);
         if (provider == null) {
             return OperationResult.unsupported(noProviderMessage("解冻"));
         }
-        return provider.unfreeze(packageName);
+        return provider.unfreeze(packageName, userId);
     }
 
-    public OperationResult uninstall(String packageName, boolean systemApp) {
+    public OperationResult uninstall(String packageName, boolean systemApp, int userId) {
         PrivilegeProvider provider = resolve(Capability.UNINSTALL);
         if (provider == null) {
             return OperationResult.unsupported(noProviderMessage("卸载"));
         }
-        return provider.uninstall(packageName, systemApp);
+        return provider.uninstall(packageName, systemApp, userId);
     }
 
-    public RunningState queryRunning(String packageName) {
+    public Set<String> getRunningPackages(List<AppInfo> apps) {
+        PrivilegeProvider provider = resolve(Capability.RUNNING_STATE);
+        if (provider == null) {
+            return null;
+        }
+        return provider.queryRunningPackages(apps);
+    }
+
+    public RunningState queryRunning(String packageName, int userId) {
         PrivilegeProvider provider = resolve(Capability.RUNNING_STATE);
         if (provider == null) {
             return RunningState.unsupported("当前权限模式无法读取其他应用进程");
         }
-        return provider.queryRunning(packageName);
+        return provider.queryRunning(packageName, userId);
     }
 
-    public FreezeState queryFrozen(String packageName) {
+    public FreezeState queryFrozen(String packageName, int userId) {
         PrivilegeProvider provider = resolve(Capability.FROZEN_STATE);
         if (provider == null) {
             return FreezeState.unsupported("当前权限模式无法确认冻结状态");
         }
-        return provider.queryFrozen(packageName);
+        return provider.queryFrozen(packageName, userId);
     }
 
     public Set<String> getFrozenPackages(List<AppInfo> apps) {
@@ -245,14 +253,12 @@ public final class ProviderManager {
             }
         }
 
-        if (AdbConnectionManager.hasLiveConnection()) {
-            PrivilegeProvider adb = getProvider(ProviderType.ADB_WIRELESS);
-            if (adb != null) {
-                ProviderStatus status = checkSafely(adb);
-                statuses.put(ProviderType.ADB_WIRELESS, status);
-                if (status.isReady()) {
-                    return adb;
-                }
+        PrivilegeProvider adb = getProvider(ProviderType.ADB_WIRELESS);
+        if (adb != null) {
+            ProviderStatus status = checkSafely(adb);
+            statuses.put(ProviderType.ADB_WIRELESS, status);
+            if (status.isReady()) {
+                return adb;
             }
         }
         return null;

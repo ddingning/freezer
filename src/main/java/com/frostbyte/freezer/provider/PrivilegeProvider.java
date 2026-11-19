@@ -22,27 +22,31 @@ public abstract class PrivilegeProvider {
         return ShellResult.notStarted("该权限模式不支持 Shell 命令");
     }
 
-    public OperationResult freeze(String packageName, boolean systemApp) {
+    public OperationResult freeze(String packageName, boolean systemApp, int userId) {
         return OperationResult.unsupported("该权限模式不支持冻结应用");
     }
 
-    public OperationResult unfreeze(String packageName) {
+    public OperationResult unfreeze(String packageName, int userId) {
         return OperationResult.unsupported("该权限模式不支持解冻应用");
     }
 
-    public OperationResult uninstall(String packageName, boolean systemApp) {
+    public OperationResult uninstall(String packageName, boolean systemApp, int userId) {
         return OperationResult.unsupported("该权限模式不支持静默卸载");
     }
 
-    public RunningState queryRunning(String packageName) {
+    public RunningState queryRunning(String packageName, int userId) {
         return RunningState.unsupported("该权限模式无法查询其他应用进程");
     }
 
-    public FreezeState queryFrozen(String packageName) {
+    public FreezeState queryFrozen(String packageName, int userId) {
         return FreezeState.unsupported("该权限模式无法查询冻结状态");
     }
 
     public Set<String> queryFrozenPackages(List<AppInfo> apps) {
+        return null;
+    }
+
+    public Set<String> queryRunningPackages(List<AppInfo> apps) {
         return null;
     }
 }

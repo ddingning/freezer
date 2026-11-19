@@ -10,7 +10,7 @@
 
 > 项目主页：<https://github.com/ddingning/freezer>
 >
-> 当前版本：**1.0.1**（`versionCode 2`）
+> 当前版本：**1.0.6**（`versionCode 7`） 
 > 包名：`com.frostbyte.freezer`
 
 ---
@@ -312,6 +312,17 @@ app/src/main/java/com/frostbyte/freezer/
 - [`LICENSE`](LICENSE)
 - [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)
 
+---
+
+## 更新日志
+
+- **1.0.6**：筛选标签精简为 运行/用户/系统/全部/冻结；默认显示运行中的用户应用；双击“运行”显示全部运行应用（含系统）并高亮边框；新增双开/多用户分身展示与按用户冻结/解冻/卸载；列表图标懒加载；移除标题下方副标题；冻结方式配置持久化。
+- **1.0.5**：移除反向 Shell/共享功能；新增冻结方式（自动 / disabled-user / disabled / hide / kill）、hidden 状态检测和受保护包失败原因分析；允许所有包尝试冻结。
+- **1.0.4**：Shell stdio 共享（已在 1.0.5 移除）。
+- **1.0.3**：无线调试端口桥接（已移除）。
+- **1.0.2**：修复卸载按钮图标与文字间距。
+- **1.0.1**：搜索支持纯数字 UID 精确匹配。
+- **1.0.0**：多权限后端、应用详情页、运行状态修复、无线 ADB 配对、项目地址卡片。
 
 
 ---

@@ -50,13 +50,6 @@
                     android:textColor="@color/text_primary"
                     android:textSize="22sp" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="1dp"
-                    android:text="@string/app_subtitle"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
             </LinearLayout>
 
             <ImageButton
@@ -150,19 +143,19 @@
                 android:id="@+id/chip_group"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:checkedChip="@id/chip_all"
+                app:checkedChip="@id/chip_running"
                 app:chipSpacingHorizontal="8dp"
                 app:selectionRequired="true"
                 app:singleLine="true"
                 app:singleSelection="true">
 
                 <com.google.android.material.chip.Chip
-                    android:id="@+id/chip_all"
+                    android:id="@+id/chip_running"
                     style="@style/Widget.Material3.Chip.Filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="@string/filter_all" />
+                    android:text="@string/filter_running" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_user"
@@ -177,6 +170,13 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/filter_system" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_all"
+                    style="@style/Widget.Material3.Chip.Filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/filter_all" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chip_frozen"

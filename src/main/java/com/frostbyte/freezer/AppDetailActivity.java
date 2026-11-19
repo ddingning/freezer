@@ -36,6 +36,8 @@ import java.util.concurrent.Executors;
 
 public class AppDetailActivity extends AppCompatActivity {
     public static final String EXTRA_PACKAGE_NAME = "package_name";
+    public static final String EXTRA_USER_ID = "user_id";
+    public static final String EXTRA_UID = "uid";
 
     private final ExecutorService ioExecutor = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -43,6 +45,8 @@ public class AppDetailActivity extends AppCompatActivity {
     private ProviderManager providerManager;
     private AppRepository repository;
     private String packageName;
+    private int userId;
+    private int uidExtra = -1;
 
     private ImageView iconView;
     private TextView nameView;
@@ -74,6 +78,8 @@ public class AppDetailActivity extends AppCompatActivity {
         providerManager = ProviderManager.get(this);
         repository = new AppRepository(this);
         packageName = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        userId = getIntent().getIntExtra(EXTRA_USER_ID, 0);
+        uidExtra = getIntent().getIntExtra(EXTRA_UID, -1);
         if (packageName == null || packageName.isEmpty()) {
             finish();
             return;
@@ -133,7 +139,8 @@ public class AppDetailActivity extends AppCompatActivity {
                 ? detail.icon
                 : ContextCompat.getDrawable(this, android.R.drawable.sym_def_app_icon));
         nameView.setText(detail.label);
-        packageView.setText(detail.packageName);
+        packageView.setText(userId == 0 ? detail.packageName
+                : detail.packageName + " · 分身");
 
         rowsContainer.removeAllViews();
         frozenValueView = null;
@@ -144,7 +151,11 @@ public class AppDetailActivity extends AppCompatActivity {
                 detail.sourceDir.isEmpty() ? getString(R.string.detail_unavailable) : detail.sourceDir);
         addRow(getString(R.string.detail_label_data),
                 detail.dataDir.isEmpty() ? getString(R.string.detail_unavailable) : detail.dataDir);
-        addRow(getString(R.string.detail_label_uid), String.valueOf(detail.uid));
+        addRow(getString(R.string.detail_label_uid),
+                String.valueOf(uidExtra >= 0 ? uidExtra : detail.uid));
+        addRow(getString(R.string.detail_label_user),
+                userId == 0 ? getString(R.string.detail_user_primary)
+                        : getString(R.string.detail_user_clone, userId));
         addRow(getString(R.string.detail_label_first_install),
                 detail.firstInstallTime == 0 ? getString(R.string.detail_unavailable)
                         : formatTime(detail.firstInstallTime));
@@ -166,7 +177,8 @@ public class AppDetailActivity extends AppCompatActivity {
         addRow(getString(R.string.detail_label_target_sdk), String.valueOf(detail.targetSdk));
         addRow(getString(R.string.detail_label_version_code), String.valueOf(detail.versionCode));
 
-        if (freezeState == null || freezeState.state == FreezeState.State.UNSUPPORTED) {
+        if (userId == 0 && (freezeState == null
+                || freezeState.state == FreezeState.State.UNSUPPORTED)) {
             freezeState = new FreezeState(
                     detail.pmEnabled ? FreezeState.State.NOT_FROZEN : FreezeState.State.FROZEN,
                     "PackageManager enabled=" + detail.pmEnabled);
@@ -213,10 +225,10 @@ public class AppDetailActivity extends AppCompatActivity {
         final int generation = ++statusGeneration;
         setPillsChecking();
         ioExecutor.execute(() -> {
-            FreezeState freeze = providerManager.queryFrozen(packageName);
-            RunningState running = providerManager.queryRunning(packageName);
+            FreezeState freeze = providerManager.queryFrozen(packageName, userId);
+            RunningState running = providerManager.queryRunning(packageName, userId);
             FreezeState finalFreeze = freeze;
-            if ((freeze.state == FreezeState.State.UNSUPPORTED
+            if (userId == 0 && (freeze.state == FreezeState.State.UNSUPPORTED
                     || freeze.state == FreezeState.State.UNKNOWN) && detail != null) {
                 finalFreeze = new FreezeState(
                         detail.pmEnabled ? FreezeState.State.NOT_FROZEN : FreezeState.State.FROZEN,
@@ -351,7 +363,7 @@ public class AppDetailActivity extends AppCompatActivity {
 
     private boolean isEffectivelyFrozen() {
         if (freezeState == null) {
-            return detail != null && !detail.pmEnabled;
+            return userId == 0 && detail != null && !detail.pmEnabled;
         }
         if (freezeState.state == FreezeState.State.FROZEN) {
             return true;
@@ -359,7 +371,7 @@ public class AppDetailActivity extends AppCompatActivity {
         if (freezeState.state == FreezeState.State.NOT_FROZEN) {
             return false;
         }
-        return detail != null && !detail.pmEnabled;
+        return userId == 0 && detail != null && !detail.pmEnabled;
     }
 
     private void onToggleClicked() {
@@ -368,8 +380,8 @@ public class AppDetailActivity extends AppCompatActivity {
                 detail == null ? packageName : detail.label));
         ioExecutor.execute(() -> {
             final OperationResult result = unfreeze
-                    ? providerManager.unfreeze(packageName)
-                    : providerManager.freeze(packageName, detail != null && detail.system);
+                    ? providerManager.unfreeze(packageName, userId)
+                    : providerManager.freeze(packageName, detail != null && detail.system, userId);
             mainHandler.post(() -> {
                 if (destroyed) {
                     return;
@@ -393,6 +405,9 @@ public class AppDetailActivity extends AppCompatActivity {
         String label = detail == null ? packageName : detail.label;
         StringBuilder message = new StringBuilder();
         message.append("确定要卸载「").append(label).append("」吗？\n\n包名：").append(packageName);
+        if (userId != 0) {
+            message.append("\n用户：分身（").append(userId).append("）");
+        }
         if (detail != null && detail.system) {
             message.append("\n\n").append(getString(R.string.uninstall_system_warning));
         }
@@ -409,7 +424,7 @@ public class AppDetailActivity extends AppCompatActivity {
                 detail == null ? packageName : detail.label));
         ioExecutor.execute(() -> {
             final OperationResult result = providerManager.uninstall(
-                    packageName, detail != null && detail.system);
+                    packageName, detail != null && detail.system, userId);
             mainHandler.post(() -> {
                 if (destroyed) {
                     return;
@@ -427,6 +442,10 @@ public class AppDetailActivity extends AppCompatActivity {
     }
 
     private void launchApp() {
+        if (userId != 0) {
+            Toast.makeText(this, "分身应用请在对应分身环境中启动", Toast.LENGTH_SHORT).show();
+            return;
+        }
         if (isEffectivelyFrozen()) {
             Toast.makeText(this, "应用已冻结，请先解冻", Toast.LENGTH_SHORT).show();
             return;

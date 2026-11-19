@@ -50,6 +50,21 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/app_clone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_pill_system"
+        android:fontFamily="sans-serif-medium"
+        android:paddingStart="9dp"
+        android:paddingTop="3dp"
+        android:paddingEnd="9dp"
+        android:paddingBottom="3dp"
+        android:textColor="@color/system_text"
+        android:textSize="10sp"
+        android:visibility="gone" />
+
+    <TextView
         android:id="@+id/app_status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

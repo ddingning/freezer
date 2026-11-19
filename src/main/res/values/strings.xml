@@ -8,12 +8,14 @@
 
     <string name="search_hint">搜索名称 / 包名 / UID</string>
 
+    <string name="filter_running">运行</string>
     <string name="filter_all">全部</string>
-    <string name="filter_user">用户应用</string>
-    <string name="filter_system">系统应用</string>
-    <string name="filter_frozen">已冻结</string>
+    <string name="filter_user">用户</string>
+    <string name="filter_system">系统</string>
+    <string name="filter_frozen">冻结</string>
 
     <string name="status_frozen">已冻结</string>
+    <string name="clone_badge">分身</string>
     <string name="status_system">系统</string>
     <string name="status_running">运行中</string>
 
@@ -28,7 +30,14 @@
     <string name="device_admin_only">设备管理员（只读）</string>
     <string name="permissions_title">权限与工作模式</string>
     <string name="permissions_subtitle">按实际执行结果选择可用后端</string>
-    <string name="permissions_note">不同权限模式的能力不同：ADB Shell 是 UID 2000，不是 Root；设备管理员不能静默管理应用；设备所有者仅支持隐藏/取消隐藏。</string>
+    <string name="freeze_mode_title">冻结方式</string>
+    <string name="freeze_mode_desc">自动模式先尝试 disabled-user，被系统拒绝时改用 hide；hide 可 unhide 恢复，kill 仅强制停止进程。允许对所有包尝试。</string>
+    <string name="freeze_mode_auto">自动（disable-user → hide）</string>
+    <string name="freeze_mode_disable_user">disabled-user（默认）</string>
+    <string name="freeze_mode_disable">disabled（系统级）</string>
+    <string name="freeze_mode_hide">hide（隐藏，可 unhide 恢复）</string>
+    <string name="freeze_mode_kill">kill（仅 force-stop，不持久）</string>
+    <string name="freeze_mode_note">hide 使用 PackageManager hidden 状态，可 unhide 恢复；kill 不持久。DISALLOW_DISABLE 不做原地清理，自动模式用 hide 绕过。对系统关键包操作风险自负。</string>    <string name="permissions_note">不同权限模式的能力不同：ADB Shell 是 UID 2000，不是 Root；设备管理员不能静默管理应用；设备所有者仅支持隐藏/取消隐藏。</string>
     <string name="action_recheck">重新检测</string>
     <string name="action_pair">配对</string>
     <string name="action_connect">连接</string>
@@ -62,6 +71,9 @@
     <string name="detail_label_source">程序路径</string>
     <string name="detail_label_data">数据路径</string>
     <string name="detail_label_uid">UID</string>
+    <string name="detail_label_user">用户</string>
+    <string name="detail_user_primary">主用户</string>
+    <string name="detail_user_clone">分身 / 用户 %1$d</string>
     <string name="detail_label_first_install">安装日期</string>
     <string name="detail_label_last_update">更新时间</string>
     <string name="detail_label_running">运行状态</string>

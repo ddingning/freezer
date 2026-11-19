@@ -2,6 +2,9 @@ package com.frostbyte.freezer;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.LruCache;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
@@ -16,13 +19,21 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolder> {
 
     enum Filter {
-        ALL, USER, SYSTEM, FROZEN
+        RUNNING_USER,
+        RUNNING_ALL,
+        USER,
+        SYSTEM,
+        ALL,
+        FROZEN
     }
 
     interface Listener {
@@ -31,19 +42,23 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
         void onDataChanged(int visibleCount);
     }
 
-    private final Context context;
+    private final Context appContext;
     private final Listener listener;
     private final LayoutInflater inflater;
     private final List<AppInfo> allApps = new ArrayList<>();
     private final List<AppInfo> visibleApps = new ArrayList<>();
+    private final Set<String> runningPackages = new HashSet<>();
     private final int highlightColor;
     private final Drawable fallbackIcon;
+    private final LruCache<String, Drawable> iconCache = new LruCache<>(160);
+    private final ExecutorService iconExecutor = Executors.newFixedThreadPool(2);
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    private Filter filter = Filter.ALL;
+    private Filter filter = Filter.RUNNING_USER;
     private String query = "";
 
     AppListAdapter(Context context, Listener listener) {
-        this.context = context;
+        this.appContext = context.getApplicationContext();
         this.listener = listener;
         this.inflater = LayoutInflater.from(context);
         this.highlightColor = ContextCompat.getColor(context, R.color.primary);
@@ -65,6 +80,18 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
         rebuild();
     }
 
+    Filter getFilter() {
+        return filter;
+    }
+
+    void setRunningPackages(Set<String> packages) {
+        runningPackages.clear();
+        if (packages != null) {
+            runningPackages.addAll(packages);
+        }
+        rebuild();
+    }
+
     void setQuery(String query) {
         String normalized = query == null ? "" : query.trim();
         if (this.query.equals(normalized)) {
@@ -76,7 +103,7 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
 
     void applyFrozen(Set<String> frozenPackages) {
         for (AppInfo app : allApps) {
-            app.frozen = frozenPackages.contains(app.packageName);
+            app.frozen = frozenPackages.contains(app.key());
         }
         rebuild();
     }
@@ -115,6 +142,10 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
 
     private boolean matchesFilter(AppInfo app) {
         switch (filter) {
+            case RUNNING_USER:
+                return !app.system && runningPackages.contains(app.key());
+            case RUNNING_ALL:
+                return runningPackages.contains(app.key());
             case USER:
                 return !app.system;
             case SYSTEM:
@@ -147,23 +178,58 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         AppInfo app = visibleApps.get(position);
-        holder.icon.setImageDrawable(app.icon != null ? app.icon : fallbackIcon);
+        bindIcon(holder, app.packageName);
         holder.name.setText(highlight(app.label, query));
         holder.packageName.setText(highlight(app.packageName, query));
+        holder.clone.setVisibility(app.isClone() ? View.VISIBLE : View.GONE);
+        holder.clone.setText(app.isClone()
+                ? appContext.getString(R.string.clone_badge) : "");
 
         if (app.frozen) {
             holder.status.setVisibility(View.VISIBLE);
             holder.status.setText(R.string.status_frozen);
-            holder.status.setTextColor(ContextCompat.getColor(context, R.color.frozen_text));
+            holder.status.setTextColor(ContextCompat.getColor(appContext, R.color.frozen_text));
             holder.status.setBackgroundResource(R.drawable.bg_pill_frozen);
         } else if (app.system) {
             holder.status.setVisibility(View.VISIBLE);
             holder.status.setText(R.string.status_system);
-            holder.status.setTextColor(ContextCompat.getColor(context, R.color.system_text));
+            holder.status.setTextColor(ContextCompat.getColor(appContext, R.color.system_text));
             holder.status.setBackgroundResource(R.drawable.bg_pill_system);
         } else {
             holder.status.setVisibility(View.GONE);
         }
+    }
+
+    private void bindIcon(@NonNull final ViewHolder holder, final String packageName) {
+        holder.icon.setTag(packageName);
+        Drawable cached = iconCache.get(packageName);
+        if (cached != null) {
+            holder.icon.setImageDrawable(cached);
+            return;
+        }
+        holder.icon.setImageDrawable(fallbackIcon);
+        iconExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Drawable loaded = null;
+                try {
+                    loaded = appContext.getPackageManager().getApplicationIcon(packageName);
+                } catch (Exception ignored) {
+                }
+                final Drawable result = loaded != null ? loaded : fallbackIcon;
+                if (loaded != null) {
+                    iconCache.put(packageName, result);
+                }
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (packageName.equals(holder.icon.getTag())) {
+                            holder.icon.setImageDrawable(result);
+                        }
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -173,7 +239,7 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
 
     @Override
     public long getItemId(int position) {
-        return visibleApps.get(position).packageName.hashCode();
+        return visibleApps.get(position).key().hashCode();
     }
 
     private CharSequence highlight(String text, String search) {
@@ -223,6 +289,7 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
         final ImageView icon;
         final TextView name;
         final TextView packageName;
+        final TextView clone;
         final TextView status;
 
         ViewHolder(View view) {
@@ -230,6 +297,7 @@ final class AppListAdapter extends RecyclerView.Adapter<AppListAdapter.ViewHolde
             icon = view.findViewById(R.id.app_icon);
             name = view.findViewById(R.id.app_name);
             packageName = view.findViewById(R.id.app_package);
+            clone = view.findViewById(R.id.app_clone);
             status = view.findViewById(R.id.app_status);
         }
     }

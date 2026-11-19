@@ -16,6 +16,7 @@ import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +32,7 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.frostbyte.freezer.admin.FreezerDeviceAdminReceiver;
 import com.frostbyte.freezer.adb.AdbPairingService;
 import com.frostbyte.freezer.provider.AdbProvider;
+import com.frostbyte.freezer.provider.FreezeSettings;
 import com.frostbyte.freezer.provider.OperationResult;
 import com.frostbyte.freezer.provider.PrivilegeProvider;
 import com.frostbyte.freezer.provider.ProviderManager;
@@ -51,6 +53,8 @@ public class PermissionsActivity extends AppCompatActivity {
     private final Map<ProviderType, ProviderCard> cards = new EnumMap<>(ProviderType.class);
 
     private ProviderManager providerManager;
+    private RadioGroup freezeModeGroup;
+    private boolean bindingFreezeMode;
     private AlertDialog progressDialog;
     private AlertDialog pairingDialog;
     private AdbProvider adbProvider;
@@ -104,7 +108,54 @@ public class PermissionsActivity extends AppCompatActivity {
             card.render(ProviderStatus.checking(), provider.getCapabilities());
         }
 
+
+        bindFreezeMode();
         refreshAll();
+    }
+
+    private void bindFreezeMode() {
+        freezeModeGroup = findViewById(R.id.freeze_mode_group);
+        bindingFreezeMode = true;
+        int checkedId;
+        switch (FreezeSettings.getMode(this)) {
+            case DISABLE_USER:
+                checkedId = R.id.mode_disable_user;
+                break;
+            case DISABLE:
+                checkedId = R.id.mode_disable;
+                break;
+            case HIDE:
+                checkedId = R.id.mode_hide;
+                break;
+            case KILL:
+                checkedId = R.id.mode_kill;
+                break;
+            case AUTO:
+            default:
+                checkedId = R.id.mode_auto;
+                break;
+        }
+        freezeModeGroup.check(checkedId);
+        bindingFreezeMode = false;
+        freezeModeGroup.setOnCheckedChangeListener((group, id) -> {
+            if (bindingFreezeMode) {
+                return;
+            }
+            FreezeSettings.Mode mode;
+            if (id == R.id.mode_disable_user) {
+                mode = FreezeSettings.Mode.DISABLE_USER;
+            } else if (id == R.id.mode_disable) {
+                mode = FreezeSettings.Mode.DISABLE;
+            } else if (id == R.id.mode_hide) {
+                mode = FreezeSettings.Mode.HIDE;
+            } else if (id == R.id.mode_kill) {
+                mode = FreezeSettings.Mode.KILL;
+            } else {
+                mode = FreezeSettings.Mode.AUTO;
+            }
+            FreezeSettings.setMode(this, mode);
+            Toast.makeText(this, "已保存冻结方式", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override

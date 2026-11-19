@@ -53,12 +53,18 @@ public final class DeviceOwnerProvider extends PrivilegeProvider {
     }
 
     @Override
-    public OperationResult freeze(String packageName, boolean systemApp) {
+    public OperationResult freeze(String packageName, boolean systemApp, int userId) {
+        if (userId != 0) {
+            return OperationResult.unsupported("Device Owner 模式仅管理当前用户，暂不支持分身用户");
+        }
         return setHidden(packageName, true);
     }
 
     @Override
-    public OperationResult unfreeze(String packageName) {
+    public OperationResult unfreeze(String packageName, int userId) {
+        if (userId != 0) {
+            return OperationResult.unsupported("Device Owner 模式仅管理当前用户，暂不支持分身用户");
+        }
         return setHidden(packageName, false);
     }
 
@@ -83,9 +89,12 @@ public final class DeviceOwnerProvider extends PrivilegeProvider {
     }
 
     @Override
-    public FreezeState queryFrozen(String packageName) {
+    public FreezeState queryFrozen(String packageName, int userId) {
         if (!ShellProvider.isValidPackage(packageName)) {
             return FreezeState.unknown("非法包名");
+        }
+        if (userId != 0) {
+            return FreezeState.unsupported("Device Owner 模式暂不支持分身用户状态");
         }
         try {
             boolean hidden = devicePolicyManager.isApplicationHidden(admin, packageName);
@@ -100,8 +109,9 @@ public final class DeviceOwnerProvider extends PrivilegeProvider {
         Set<String> hidden = new HashSet<>();
         try {
             for (AppInfo app : apps) {
-                if (devicePolicyManager.isApplicationHidden(admin, app.packageName)) {
-                    hidden.add(app.packageName);
+                if (app.userId == 0
+                        && devicePolicyManager.isApplicationHidden(admin, app.packageName)) {
+                    hidden.add(app.key());
                 }
             }
         } catch (Throwable e) {
@@ -111,13 +121,13 @@ public final class DeviceOwnerProvider extends PrivilegeProvider {
     }
 
     @Override
-    public OperationResult uninstall(String packageName, boolean systemApp) {
+    public OperationResult uninstall(String packageName, boolean systemApp, int userId) {
         return OperationResult.unsupported(
                 "Device Owner 模式不支持静默卸载，请在系统设置中手动卸载");
     }
 
     @Override
-    public RunningState queryRunning(String packageName) {
+    public RunningState queryRunning(String packageName, int userId) {
         return RunningState.unsupported(
                 "Device Owner 没有进程查询能力，无法确认运行状态");
     }
